@@ -8,6 +8,10 @@ import { Modal } from 'components/Modal/Modal';
 import { fetchImages } from 'components/FetchImages/fetchImages';
 
 export class App extends Component {
+  constructor(props) {
+    super(props);
+    this.firstNewImageRef = React.createRef();
+  }
   state = {
     images: [],
     isLoading: false,
@@ -16,35 +20,61 @@ export class App extends Component {
     modalOpen: false,
     modalImg: '',
     modalAlt: '',
+    loadMore: true,
   };
 
-  handleSubmit = async e => {
-    e.preventDefault();
+  componentDidMount() {
+    window.addEventListener('keydown', this.handleKeyDown);
+  }
+
+  componentDidUpdate(_, prevState) {
+    if (
+      this.state.pageNr !== prevState.pageNr ||
+      this.state.currentSearch !== prevState.currentSearch
+    ) {
+      this.fetchImages();
+    }
+  }
+
+  fetchImages = async () => {
     this.setState({ isLoading: true });
 
-    const inputForSearch = e.target.elements.inputForSearch;
+    const response = await fetchImages(
+      this.state.currentSearch,
+      this.state.pageNr
+    );
 
-    if (inputForSearch.value.trim() === '') {
-      return;
-    }
-    const response = await fetchImages(inputForSearch.value, 1);
-    this.setState({
-      images: response,
+    const { hits, totalHits } = response;
+
+    this.setState(prevState => ({
+      images: [...prevState.images, ...hits],
       isLoading: false,
-      currentSearch: inputForSearch.value,
+      loadMore: prevState.pageNr < Math.ceil(totalHits / 12),
+    }),
+    () => {
+      if (this.firstNewImageRef.current) {
+        this.firstNewImageRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }
+    }
+    );
+  };
+
+  handleSearch = query => {
+    this.setState({
+      currentSearch: query,
+      images: [],
       pageNr: 1,
+      loadMore: true,
     });
   };
 
-  handleClickMore = async () => {
-    const response = await fetchImages(
-      this.state.currentSearch,
-      this.state.pageNr + 1
-    );
-    this.setState({
-      images: [...this.state.images, ...response],
-      pageNr: this.state.pageNr + 1,
-    });
+  handleClickMore = () => {
+    this.setState(prevState => ({
+      pageNr: prevState.pageNr + 1,
+    }));
   };
 
   handleImageClick = e => {
@@ -69,10 +99,6 @@ export class App extends Component {
     }
   };
 
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleKeyDown);
-  }
-
   render() {
     return (
       <div
@@ -87,12 +113,13 @@ export class App extends Component {
           <Loader />
         ) : (
           <React.Fragment>
-            <SearchBar onSubmit={this.handleSubmit} />
+            <SearchBar onSubmit={this.handleSearch} />
             <ImageGallery
               onImageClick={this.handleImageClick}
               images={this.state.images}
+              firstNewImageRef={this.firstNewImageRef}
             />
-            {this.state.images.length > 0 ? (
+            {this.state.images.length > 0 && this.state.loadMore ? (
               <Button onClick={this.handleClickMore} />
             ) : null}
           </React.Fragment>
@@ -108,3 +135,5 @@ export class App extends Component {
     );
   }
 }
+
+export default App;

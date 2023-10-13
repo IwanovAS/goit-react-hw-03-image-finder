@@ -1,7 +1,8 @@
+import React from 'react';
 import css from './ImageGalleryItem.module.css'
 
-export const ImageGalleryItem = ({ image, onClick }) => (
-  <li className={css.ImageGalleryItem} id={image.id} onClick={onClick}>
+export const ImageGalleryItem = React.forwardRef(({ image, onClick }, ref) => (
+  <li className={css.ImageGalleryItem} id={image.id} onClick={onClick} ref={ref}>
     <img
       src={image.webformatURL}
       alt={image.tags}
@@ -9,4 +10,4 @@ export const ImageGalleryItem = ({ image, onClick }) => (
       className={css.ImageGalleryItemImage}
     />
   </li>
-);
+));
