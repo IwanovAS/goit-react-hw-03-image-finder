@@ -8,6 +8,10 @@ export class SearchBar extends Component {
 
   handleSubmit = e => {
     e.preventDefault();
+    if (this.state.query.trim() === '') {
+      alert('Can not be empty');
+      return;
+    }
     this.props.onSubmit(this.state.query);
   };
 

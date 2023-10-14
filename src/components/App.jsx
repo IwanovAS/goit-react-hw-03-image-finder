@@ -23,14 +23,6 @@ export class App extends Component {
     loadMore: true,
   };
 
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleKeyDown);
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleKeyDown);
-  }
-
   componentDidUpdate(_, prevState) {
     if (
       this.state.pageNr !== prevState.pageNr ||
@@ -39,12 +31,6 @@ export class App extends Component {
       this.fetchImages();
     }
   }
-
-  handleKeyDown = e => {
-    if (e.code === 'Escape') {
-      this.handleModalClose();
-    }
-  };
 
   fetchImages = async () => {
     this.setState({ isLoading: true });
