@@ -27,6 +27,10 @@ export class App extends Component {
     window.addEventListener('keydown', this.handleKeyDown);
   }
 
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.handleKeyDown);
+  }
+
   componentDidUpdate(_, prevState) {
     if (
       this.state.pageNr !== prevState.pageNr ||
@@ -35,6 +39,12 @@ export class App extends Component {
       this.fetchImages();
     }
   }
+
+  handleKeyDown = e => {
+    if (e.code === 'Escape') {
+      this.handleModalClose();
+    }
+  };
 
   fetchImages = async () => {
     this.setState({ isLoading: true });
@@ -46,19 +56,20 @@ export class App extends Component {
 
     const { hits, totalHits } = response;
 
-    this.setState(prevState => ({
-      images: [...prevState.images, ...hits],
-      isLoading: false,
-      loadMore: prevState.pageNr < Math.ceil(totalHits / 12),
-    }),
-    () => {
-      if (this.firstNewImageRef.current) {
-        this.firstNewImageRef.current.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        });
+    this.setState(
+      prevState => ({
+        images: [...prevState.images, ...hits],
+        isLoading: false,
+        loadMore: prevState.pageNr < Math.ceil(totalHits / 12),
+      }),
+      () => {
+        if (this.firstNewImageRef.current) {
+          this.firstNewImageRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
+        }
       }
-    }
     );
   };
 
@@ -93,12 +104,6 @@ export class App extends Component {
     });
   };
 
-  handleKeyDown = e => {
-    if (e.code === 'Escape') {
-      this.handleModalClose();
-    }
-  };
-
   render() {
     return (
       <div
@@ -109,28 +114,28 @@ export class App extends Component {
           paddingBottom: '24px',
         }}
       >
-        {this.state.isLoading ? (
-          <Loader />
-        ) : (
-          <React.Fragment>
-            <SearchBar onSubmit={this.handleSearch} />
-            <ImageGallery
-              onImageClick={this.handleImageClick}
-              images={this.state.images}
-              firstNewImageRef={this.firstNewImageRef}
-            />
-            {this.state.images.length > 0 && this.state.loadMore ? (
-              <Button onClick={this.handleClickMore} />
-            ) : null}
-          </React.Fragment>
+        {this.state.isLoading && <Loader />}
+        <SearchBar onSubmit={this.handleSearch} />
+
+        {this.state.images.length > 0 && (
+          <ImageGallery
+            onImageClick={this.handleImageClick}
+            images={this.state.images}
+            firstNewImageRef={this.firstNewImageRef}
+          />
         )}
-        {this.state.modalOpen ? (
+
+        {this.state.images.length > 0 &&
+          !this.state.isLoading &&
+          this.state.loadMore && <Button onClick={this.handleClickMore} />}
+
+        {this.state.modalOpen && (
           <Modal
             src={this.state.modalImg}
             alt={this.state.modalAlt}
             handleClose={this.handleModalClose}
           />
-        ) : null}
+        )}
       </div>
     );
   }
